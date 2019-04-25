@@ -43,83 +43,6 @@ from itertools import cycle
 # start_position, goal_position, grid_length  = read(args.start_position,args.goal_position,args.grid_size)
 # grid_size = [150,250]
 
-# define imageDiscrete as an np array
-# x = 25
-# y = 15
-# imageDiscrete = np.array((150,250,3))
-
-# fill the positions by updating the imageDiscrete
-
-# use this function to display the imageDiscrete
-def convert2nDisplay(imageDiscrete):
-    imgCopy = copy.deepcopy(imageDiscrete)
-    img = np.rot90(imgCopy,1)
-    displayImg = cv2.resize(img,(1000,600),interpolation = cv2.INTER_AREA)
-    cv2.imshow("Map", displayImg.astype(np.uint8))
-    cv2.waitKey(1)
-
-display_arrary = 255*np.ones((151,251,3))
-#use this to update the imageDiscrete using the ID's given below
-
-# set up color map for display
-# 0 - empty, white
-# 1 - startPt, red
-# 2 - goalPt, green
-# 3 - visited, yellow
-# 4 - obstacle, black
-# 5 - path, blue
-
-def onlyUpdateDisplay(imageDiscrete,pt,val):
-    red =0
-    green =0
-    blue =0
-    if val ==0:
-        red,green,blue = 255,255,255
-    elif val == 1:
-        red,green,blue = 255,0,0
-    elif val == 2:
-        red,green,blue = 0,255,0
-    elif val == 3:
-        red,green,blue = 255,255,0
-    elif val == 4:
-        red,green,blue = 0,0,0
-    elif val == 5:
-        red,green,blue = 0,0,255
-    else:
-        # to catch errors
-        red,green,blue = 255,0,255
-    imageDiscrete[pt[0],pt[1],0] = blue
-    imageDiscrete[pt[0],pt[1],1] = green
-    imageDiscrete[pt[0],pt[1],2] = red
-    return imageDiscrete
-
-# use this to update and display the imageDiscrete
-def updateAndDisplay(imageDiscrete,pt,val):
-    red =0
-    green =0
-    blue =0
-    if val ==0:
-        red,green,blue = 255,255,255
-    elif val == 1:
-        red,green,blue = 255,0,0
-    elif val == 2:
-        red,green,blue = 0,255,0
-    elif val == 3:
-        red,green,blue = 255,255,0
-    elif val == 4:
-        red,green,blue = 0,0,0
-    elif val == 5:
-        red,green,blue = 0,0,255
-    else:
-        # to catch errors
-        red,green,blue = 255,0,255
-    imageDiscrete[pt[0],pt[1],0] = blue
-    imageDiscrete[pt[0],pt[1],1] = green
-    imageDiscrete[pt[0],pt[1],2] = red
-    convert2nDisplay(imageDiscrete)
-    return imageDiscrete
-
-
 
 start_position = ([5,0],0)
 # goal_position = [([145,240],0)]
@@ -128,8 +51,8 @@ grid_size = [150,250]
 grid_length = 5
 
 
-import Queue as queue
-# import queue
+# import Queue as queue
+import queue
 #
 # #### solving linear equations
 def solve(lin_eqn1,lin_eqn2):
@@ -537,50 +460,19 @@ def explored(node):
     if status == True:
         new_nodes.append(left_loc)
 
-
-
     up_left_loc,status  = (up_left(current_node))
     #print(up_left_loc)
     if status == True:
         new_nodes.append(up_left_loc)
 
-
-
     return new_nodes
 
-
-# def gridCoord2Node(xg,yg,Xt):
-#     if xg>Xt:
-#         print("error in get node")
-#     nodeNumber = (xg)+(yg*(Xt+1))
-#     return int(nodeNumber)
-#
-# def node2GridCoord(nodeNumber,Xt):
-#     yg = nodeNumber//(Xt+1)
-#     xg = nodeNumber%(Xt+1)
-#     return xg,yg
-
-root2 = round(2**0.5,4)
-
-def getNextNodesAndCost(nodeNumber_,Xt = 250,Yt = 150):
-    xc,yc = nodeNumber_
-
-    nearbyList = []
-    for i in [-1,0,1]:
-        for j in [-1,0,1]:
-            if xc+i>=0 and yc+j >=0 and xc+i<=Xt and yc+j<=Yt:
-                if abs(i*j) == 1:
-                    temp = np.array([(xc+i,yc+j,Xt),root2])
-                    nearbyList.append(temp)
-                elif not(i == 0 and j == 0):
-                    temp = np.array([(xc+i,yc+j,Xt),1])
-                    nearbyList.append(temp)
-    return nearbyList
 
 ## To generate the obstacle_set from the map
 def obstacle_list(obstacle_space):
     loc = []
     #print(obstacle_space)
+    obstacle_space_list = []
     obstacle_space_set = set([])
     A = np.zeros([150,250])
     for i in range(0,A.shape[0]):
@@ -588,8 +480,9 @@ def obstacle_list(obstacle_space):
             #loc.append([i,j])
             if obstacle_space[i,j] == 1:
                 obstacle_space_set.add(str([i,j]))
+                obstacle_space_list.append([i,j])
 
-    return obstacle_space_set
+    return obstacle_space_set, obstacle_space_list
 
 ## To generate all the possible nodes of the map
 def node_info_list():
@@ -619,12 +512,6 @@ map_new = np.zeros([grid_size[0] + 1, grid_size[1] + 1])
 
 
 ## To capture the parent nodes from the visited node
-# node_info = []
-# node_info.append([None, start_position[0], 0])
-
-# q = queue.Queue(maxsize=0)
-# q.put([start_position])
-
 q = queue.PriorityQueue()
 q.put([start_position[1],start_position[0]])
 
@@ -643,24 +530,18 @@ is_a_vaid_input = valid_start_goal(start_position,goal_position,point_robot_obst
 goal_reached = False
 
 visited_node = []
-def display_map(start_position,goal_position,node_path,visited_node,updated_map_point_robot):
-    display_map = updated_map_point_robot
-    print(display_map.shape)
+def display_map(start_position,goal_position,node_path,visited_node,updated_map_point_robot,obs_list):
 
+
+    display_arrary = np.asarray(obs_list)
+    visited_node_array = np.asarray(visited_node)
     plt.figure(figsize=(150,250))
 
-    for i in range(0,display_map.shape[0]):
-        for j in range(0,display_map.shape[1]):
-            if display_map[i,j] == 1:
-                plt.plot(j,150-i,'k.')
-
-    for node in node_path:
-        plt.plot(start_position[0][1],150-start_position[0][0],'bo')
-        plt.plot(goal_position[0][0][1],150-goal_position[0][0][0],'go')
-        plt.plot(node[1],150-node[0],'r+')
-
-    for node in visited_node:
-        plt.plot(node[1],150-node[0],'b+',label = 'explored nodes')
+    plt.plot(display_arrary[:,1],150-display_arrary[:,0],'g+')
+    plt.plot(start_position[0][1],150-start_position[0][0],'bo')
+    plt.plot(goal_position[0][0][1],150-goal_position[0][0][0],'go')
+    plt.plot(node_path[:,1],150-node_path[:,0],'r+')
+    plt.plot(visited_node_array[:,1],150-visited_node_array[:,0],'b+')
 
     plt.xlim(0,250)
     plt.ylim(0,150)
@@ -724,8 +605,6 @@ while not q.empty() and is_a_vaid_input == True:
     print('node in while',node)
     node = [(node[1],node[0])]
 
-
-
     # print('node coming from the queue',tuple(node[0][0]))
     iter1+=1
     if node[0][0] == goal_position[0][0]:
@@ -734,57 +613,22 @@ while not q.empty() and is_a_vaid_input == True:
         break
     explored_nodes = explored(node)
 
-    # expl = getNextNodesAndCost(tuple(node[0][0]))
-
-
     for action in explored_nodes:
-    # for action in expl:
-
-        # print(action)   # [([4,0],1)]
-        # print(action)   ### [(4,0,250) 1]
         iter2 += 1
-        # if is_visited_check_tuple([action[0][0],action[0][1]],node_check_set) == False:
         if is_visited_check(action,node_check_set) == False:
-
             if if_obstacle(action,point_robot_obstacle_space_set) == False:
-            # if if_obstacle_tuple([action[0][0],action[0][1]],point_robot_obstacle_space_set) == False:
-
                 node_check_set.add(str(action[0][0])) ## marked as visited --> added to visited nodes
                 cost = action[0][1] + node_info_dict[str(node[0][0])] + cost_to_go(action,goal_position)
                 visited_node.append(action[0][0])
                 node_info_dict[str(action[0][0])] = cost
                 q.put([cost,action[0][0]])
-                # q.put([(action[0][0],cost)])
                 node_info_parent_dict[str(action[0][0])] = node[0][0]
-                # display_arrary = updateAndDisplay(display_arrary,action[0][0],3)
-
-                # node_check_set.add(str([action[0][0],action[0][1]])) ## marked as visited --> added to visited nodes
-                # cost = action[1] + node_info_dict[str(node[0][0])] + cost_to_go_tuple([action[0][0],action[0][1]],goal_position)
-                # visited_node.append([action[0][0],action[0][1]])
-                # node_info_dict[str([action[0][0],action[0][1]])] = cost
-                # q.put([([action[0][0],action[0][1]],cost)])
-                # node_info_parent_dict[str([action[0][0],action[0][1]])] = node[0][0]
-                # display_arrary = updateAndDisplay(display_arrary,[action[0][0],action[0][1]],3)
-
-
         else:
             if if_obstacle(action,point_robot_obstacle_space_set) == False:
-            # if if_obstacle_tuple([action[0][0],action[0][1]],point_robot_obstacle_space_set) == False:
-
                 temp = action[0][1] + node_info_dict[str(node[0][0])]
-                # temp = action[1] + node_info_dict[str(node[0][0])]
-
                 if node_info_dict[str(action[0][0])] > temp:
-                # if node_info_dict[str([action[0][0],action[0][1]])] > temp:
-
                     node_info_dict[str(action[0][0])] = temp + cost_to_go(action,goal_position)
                     node_info_parent_dict[str(action[0][0])] = node[0][0]
-
-                    # node_info_dict[str([action[0][0],action[0][1]])] = temp + cost_to_go_tuple([action[0][0],action[0][1]],goal_position)
-                    # node_info_parent_dict[str([action[0][0],action[0][1]])] = node[0][0]
-
-    # if count == 10:
-    #     break
 
 if is_a_vaid_input == True:
     if goal_reached:
@@ -796,25 +640,9 @@ if is_a_vaid_input == True:
         while parent != start_position[0]:
             parent =  node_info_parent_dict[str(parent)]
             node_path.append(parent)
-            # print(parent)
-            # print(sdds)
-            # display_arrary = updateAndDisplay(display_arrary,parent,5)
-            # display_arrary = updateAndDisplay(display_arrary, )
-
-
-        # print(node_path)
-        display_map(start_position,goal_position,node_path,visited_node,updated_map_point_robot)
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
-
+	node_path_array = np.asarray(node_path)
+        display_map(start_position,goal_position,node_path_array,visited_node,updated_map_point_robot,point_robot_obstacle_space_list)
     else:
         print('cannot reach the goal')
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
-
-
 else:
     print('enter valid inputs: your goal and start positions might be in obstacle space')
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
-
